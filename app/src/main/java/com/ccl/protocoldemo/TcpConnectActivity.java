@@ -15,7 +15,7 @@ public class TcpConnectActivity extends AppCompatActivity {
     public static final int TYPE_CLIENT = 1;
 
     private int mType = -1;
-    private SocketInterface mSocket;
+    private BaseTcpSocket mSocket;
     private TextView mTvMessage;
     private EditText mEtMessage;
 
@@ -26,9 +26,9 @@ public class TcpConnectActivity extends AppCompatActivity {
         Intent intent = getIntent();
         mType = intent.getIntExtra("type", -1);
         if (mType == TYPE_CLIENT) {
-            mSocket = TcpClient.getClient();
+            mSocket = TcpClient.getTcpClient();
         } else if (mType == TYPE_SERVER) {
-            mSocket = TcpServer.getServer();
+            mSocket = TcpServer.getTcpServer();
         } else {
             finish();
             return;
@@ -39,7 +39,7 @@ public class TcpConnectActivity extends AppCompatActivity {
         } else {
             mTvMessage = (TextView) findViewById(R.id.tv_message);
             mEtMessage = (EditText) findViewById(R.id.et_message);
-            mSocket.setListener(new MainActivity.OnInputDataListener() {
+            mSocket.setListener(new BaseTcpSocket.OnInputDataListener() {
                 @Override
                 public void onSocketDataInput(String data) {
                     final String s = mTvMessage.getText().toString() + "\r\n其他: " + data;

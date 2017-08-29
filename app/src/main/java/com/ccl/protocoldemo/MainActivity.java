@@ -22,14 +22,6 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    public interface OnInputDataListener {
-        void onSocketDataInput(String data);
-    }
-
-    public interface OnConnectListener {
-        void onConnect();
-    }
-
     private EditText mEt;
     private TextView mTv;
     private boolean mReceiving;
@@ -41,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> mDevs;
     private ArrayAdapter<String> mAdapter;
     private AlertDialog.Builder mBuilder;
+    private TcpClient mTcpClient;
     private TcpServer mTcpServer;
 
     @Override
@@ -70,14 +63,14 @@ public class MainActivity extends AppCompatActivity {
         mBuilder = new AlertDialog.Builder(MainActivity.this);
         mAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, mDevs);
         mBuilder.setAdapter(mAdapter, new DialogInterface.OnClickListener() {
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String ip = mDevs.get(which);
                 mTv.setText(ip);
                 stop(null);
-                TcpClient.init(ip.split("ip: ")[1].split(",")[0]);
-                TcpClient client = TcpClient.getClient();
-                client.setListener(new OnConnectListener() {
+                TcpClient.Init(ip.split("ip: ")[1].split(",")[0]);
+                TcpClient.getTcpClient().setListener(new BaseTcpSocket.OnConnectListener() {
                     @Override
                     public void onConnect() {
                         runOnUiThread(new Runnable() {
@@ -100,8 +93,8 @@ public class MainActivity extends AppCompatActivity {
                 stop(null);
             }
         });
-
-        mTcpServer = TcpServer.getServer();
+        TcpServer.Init();
+        mTcpServer = TcpServer.getTcpServer();
     }
 
     public void send(View v) {
@@ -124,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
             mSending = false;
         } else {
             mBtnSendIp.setEnabled(false);
-            final String localIP = "IOTIP:" + android.os.Build.BRAND + "-" + android.os.Build.VERSION.RELEASE;
+            final String localIP = "IOTIP:" + android.os.Build.BRAND + android.os.Build.VERSION.RELEASE;
             if (!TextUtils.isEmpty(localIP)) {
                 new Thread(new Runnable() {
                     @Override
@@ -170,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             while (mReceiving) {
-                byte[] buf = new byte[124000];
+                byte[] buf = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buf, 0, buf.length);
                 mSocket.receive(packet);
                 Log.e("IPIPIP", "Local ip: " + localIP);
@@ -220,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private OnConnectListener mTcpServerListener = new OnConnectListener() {
+    private BaseTcpSocket.OnConnectListener mTcpServerListener = new BaseTcpSocket.OnConnectListener() {
         @Override
         public void onConnect() {
             runOnUiThread(new Runnable() {
